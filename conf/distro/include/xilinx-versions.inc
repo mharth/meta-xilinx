@@ -28,11 +28,21 @@ def csl_get_version(d):
 		return 'UNKNOWN'
 
 def csl_get_main_version(d):
-	version = csl_get_version(d)
-	if version != 'UNKNOWN':
-		return version.split()[-1].rstrip(')')
+	import bb.process
+	import subprocess
+	try:
+		topdir = d.getVar('TOPDIR', True)
+		stdout, stderr = bb.process.run('hsi -version', cwd=topdir, stderr=subprocess.PIPE)
+	except bb.process.CmdError as exc:
+		bb.error('Failed to obtain Xilinx toolchain version: %s' % exc)
+		bb.error('Make sure that Xilinx toolchain is available in the environment')
+		bb.error('Make sure that MACHINE is set correctly in your local.conf and the toolchain supports %s.' % d.getVar("TARGET_ARCH", True))
+		return 'UNKNOWN'
 	else:
-		return version
+		lines = stdout.splitlines()
+		if len(lines[0]) != 0:
+			return lines[0].split()[1].lstrip('v')
+		return 'UNKNOWN'
 
 def csl_get_gcc_version(d):
 	version = csl_get_version(d)
@@ -42,6 +52,8 @@ def csl_get_gcc_version(d):
 		return version
 
 def xilinx_get_libc_version(d):
+	import fnmatch
+
 	syspath = d.expand('${EXTERNAL_TOOLCHAIN_SYSROOT}')
 	if not syspath:
 		return 'UNKNOWN'
@@ -51,9 +63,9 @@ def xilinx_get_libc_version(d):
 		libpath = syspath + '/sgxx-glibc/lib/'
 
 	if os.path.exists(libpath):
-		for file in os.listdir(libpath):
-			if file.find('libc-') == 0:
-				return file[5:-3]
+		for root,dirs,files in os.walk(libpath):
+			for filename in fnmatch.filter(files,'libc-*.so'):
+				return filename[5:-3]
 	return 'UNKNOWN'
 
 def xilinx_get_kernel_version(d):

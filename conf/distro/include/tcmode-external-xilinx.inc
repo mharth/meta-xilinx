@@ -5,31 +5,39 @@
 TOOLCHAIN_PATH_ADD = "${EXTERNAL_TOOLCHAIN}/bin:"
 PATH =. "${TOOLCHAIN_PATH_ADD}"
 
-CSL_TARGET_SYS_armv7a ?= "arm-xilinx-linux-gnueabi"
+CSL_TARGET_SYS_aarch64 ?= "aarch64-linux-gnu"
+CSL_TARGET_SYS_armv7a ?= "arm-linux-gnueabihf"
 CSL_TARGET_SYS_microblazeel ?= "microblazeel-xilinx-linux-gnu"
 CSL_TARGET_SYS = "${TARGET_SYS}"
 
 TARGET_PREFIX = "${CSL_TARGET_SYS}-"
 
-PREFERRED_PROVIDER_linux-libc-headers = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_linux-libc-headers-dev = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}gcc = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}gcc-initial = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}gcc-intermediate = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}g++ = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}binutils = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}libc-for-gcc = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}libc-initial = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}compilerlibs = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_libgcc = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_glibc = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/libc = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/libintl = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/libiconv = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_glibc-thread-db = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/linux-libc-headers = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_virtual/linux-libc-headers-dev = "external-xilinx-toolchain"
-PREFERRED_PROVIDER_gdbserver ??= "external-xilinx-toolchain"
+PREFERRED_PROVIDER_linux-libc-headers = "linux-libc-headers-xlnx"
+PREFERRED_PROVIDER_linux-libc-headers-dev = "linux-libc-headers-xlnx"
+PREFERRED_PROVIDER_virtual/linux-libc-headers = "linux-libc-headers-xlnx"
+PREFERRED_PROVIDER_libgcc = "libgcc-xlnx"
+PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}compilerlibs = "gcc-runtime-xlnx"
+PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}binutils = "binutils-cross-xlnx-${TARGET_ARCH}"
+
+PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}gcc = "gcc-cross-xlnx-${TARGET_ARCH}"
+PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}gcc-initial = "gcc-cross-xlnx-${TARGET_ARCH}"
+PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}gcc-intermediate = "gcc-cross-xlnx-${TARGET_ARCH}"
+PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}g++ = "gcc-cross-xlnx-${TARGET_ARCH}"
+
+PREFERRED_PROVIDER_gdbserver ?= "gdbserver-xlnx"
+
+PREFERRED_PROVIDER_gcc-sanitizers ?= "gcc-sanitizers-xlnx"
+
+PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}libc-for-gcc = "glibc-xlnx"
+PREFERRED_PROVIDER_virtual/${TARGET_PREFIX}libc-initial = "glibc-xlnx"
+PREFERRED_PROVIDER_glibc = "glibc-xlnx"
+PREFERRED_PROVIDER_virtual/libc = "glibc-xlnx"
+PREFERRED_PROVIDER_virtual/libintl = "glibc-xlnx"
+PREFERRED_PROVIDER_virtual/libiconv = "glibc-xlnx"
+PREFERRED_PROVIDER_glibc-thread-db = "glibc-xlnx"
+
+WARN_QA_remove = "ldflags textrel"
+ERROR_QA_remove = "ldflags textrel"
 
 # No need to re-compile the locale files
 GLIBC_INTERNAL_USE_BINARY_LOCALE = "precompiled"
@@ -42,6 +50,10 @@ TARGET_CC_ARCH_append = " ${TARGET_LINK_HASH_STYLE}"
 # Default sysroot is inside the Xilinx ARM v7-A toolchain in the '<CSL_TARGET_SYS>/libc' (no debug-root)
 EXTERNAL_TOOLCHAIN_SYSROOT_armv7a ??= "${EXTERNAL_TOOLCHAIN}/${CSL_TARGET_SYS}/libc"
 EXTERNAL_TOOLCHAIN_DBGROOT_armv7a ??= ""
+
+# Default sysroot is inside the Xilinx ARM v8-A toolchain in the '<CSL_TARGET_SYS>/libc' (no debug-root)
+EXTERNAL_TOOLCHAIN_SYSROOT_aarch64 ??= "${EXTERNAL_TOOLCHAIN}/${CSL_TARGET_SYS}/libc"
+EXTERNAL_TOOLCHAIN_DBGROOT_aarch64 ??= "${EXTERNAL_TOOLCHAIN}/${CSL_TARGET_SYS}/debug-root"
 
 # Default sysroot is inside the Xilinx MicroBlaze toolchain in the '<CSL_TARGET_SYS>/sys-root'
 EXTERNAL_TOOLCHAIN_SYSROOT_microblazeel ??= "${EXTERNAL_TOOLCHAIN}/${CSL_TARGET_SYS}/sys-root"
@@ -58,7 +70,7 @@ python toolchain_setup () {
 
     tarprefix = d.expand('${TARGET_PREFIX}')
     files = []
-    if tarprefix == "arm-xilinx-linux-gnueabi-":
+    if tarprefix == "arm-linux-gnueabihf-":
         files.append((tarprefix + "ld", tarprefix + "ld.bfd"))
 
     if len(files) > 0:
